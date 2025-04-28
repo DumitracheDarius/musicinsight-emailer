@@ -37,9 +37,7 @@ function sendEmail({
 
       <h3>📱 TikTok Performance</h3>
       <p>${chartex_stats}</p>
-      <a href="data:text/csv;base64,${tiktok_csv_base64}" download="TikTokPerformance.csv" style="display:inline-block;margin-top:8px;padding:8px 16px;background:#4a90e2;color:white;border-radius:6px;text-decoration:none;">
-          Download TikTok CSV
-      </a>
+      <p>Vezi CSV-ul atașat în acest email.</p>
 
       <h3>📻 Radio Performance</h3>
       <img src="cid:mediaforest" style="max-width:600px; border-radius: 8px;" />
@@ -63,6 +61,11 @@ function sendEmail({
                 filename: "mediaforest.png",
                 content: Buffer.from(mediaforest_image_base64, 'base64'),
                 cid: "mediaforest"
+            },
+            {
+                filename: "TikTokPerformance.csv",
+                content: Buffer.from(tiktok_csv_base64, 'base64'),
+                contentType: "text/csv"
             }
         ]
     });
