@@ -47,6 +47,12 @@ app.post("/send-report", async (req, res) => {
             spotontrack_image_base64: spotontrackImageBase64,
             mediaforest_image_base64: mediaforestImageBase64,
             tiktok_csv_base64: tiktokCsvBase64,
+            // Extract TikTok lifetime statistics and add them explicitly
+            totalTikTokVideos: data.totalTikTokVideos || "-",
+            totalTikTokViews: data.totalTikTokViews || "-",
+            totalTikTokLikes: data.totalTikTokLikes || "-",
+            totalTikTokComments: data.totalTikTokComments || "-", 
+            totalTikTokShares: data.totalTikTokShares || "-"
         });
 
         res.json({ status: "ok" });
