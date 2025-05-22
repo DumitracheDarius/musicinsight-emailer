@@ -24,39 +24,14 @@ function sendEmail({
                        totalTikTokLikes,
                        totalTikTokComments,
                        totalTikTokShares,
-                       spotontrack_image_url,
-                       mediaforest_image_url,
-                       tiktok_csv_url,
-                       spotontrack_image_base64,
-                       mediaforest_image_base64,
-                       tiktok_csv_base64,
-                       test_image_base64
+                       spotontrack_direct_url,
+                       mediaforest_direct_url,
+                       tiktok_csv_direct_url
                    }) {
-    console.log("📧 Preparing email with:");
-    console.log(`- Spotify image data length: ${spotontrack_image_base64 ? (spotontrack_image_base64.length + ' chars') : 'missing'}`);
-    console.log(`- Mediaforest image data length: ${mediaforest_image_base64 ? (mediaforest_image_base64.length + ' chars') : 'missing'}`);
-    console.log(`- Test image data length: ${test_image_base64 ? (test_image_base64.length + ' chars') : 'missing'}`);
-
-    // Make sure the base64 data is properly formatted and doesn't contain the data:image prefix already
-    const formatBase64ForEmail = (base64Data) => {
-        if (!base64Data) return '';
-        // Remove any existing data:image prefix if it exists
-        if (base64Data.startsWith('data:image')) {
-            const parts = base64Data.split(',');
-            if (parts.length > 1) {
-                return parts[1];
-            }
-        }
-        return base64Data;
-    };
-
-    const spotontrackBase64 = formatBase64ForEmail(spotontrack_image_base64);
-    const mediaforestBase64 = formatBase64ForEmail(mediaforest_image_base64);
-    const testBase64 = formatBase64ForEmail(test_image_base64);
-    
-    console.log(`- Formatted Spotify image data length: ${spotontrackBase64.length}`);
-    console.log(`- Formatted Mediaforest image data length: ${mediaforestBase64.length}`);
-    console.log(`- Formatted Test image data length: ${testBase64.length}`);
+    console.log("📧 Preparing email with direct image URLs");
+    console.log(`- Spotontrack image URL: ${spotontrack_direct_url || 'missing'}`);
+    console.log(`- Mediaforest image URL: ${mediaforest_direct_url || 'missing'}`);
+    console.log(`- TikTok CSV URL: ${tiktok_csv_direct_url || 'missing'}`);
     
     const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -66,20 +41,23 @@ function sendEmail({
         }
     });
 
-    // Ensure we have valid base64 data for images
-    const validSpotifyImg = spotontrackBase64 && spotontrackBase64.length > 100;
-    const validMediaforestImg = mediaforestBase64 && mediaforestBase64.length > 100;
-    const validTikTokCsv = tiktok_csv_base64 && tiktok_csv_base64.length > 0;
-    const validTestImg = testBase64 && testBase64.length > 0;
-
-    console.log(`- Valid Spotify image: ${validSpotifyImg}`);
-    console.log(`- Valid Mediaforest image: ${validMediaforestImg}`);
-    console.log(`- Valid Test image: ${validTestImg}`);
+    // Sanitize song name and artist for use in URLs if needed
+    const sanitizedSong = song_name.replace(/\s+/g, "_");
+    const sanitizedArtist = artist.replace(/\s+/g, "_");
+    
+    // Generate URLs if not provided
+    const spotontrackUrl = spotontrack_direct_url || 
+        `https://expresserverjs.onrender.com/images/${sanitizedSong}_${sanitizedArtist}_spotontrack_spotify.png`;
+    
+    const mediaforestUrl = mediaforest_direct_url || 
+        `https://expresserverjs.onrender.com/images/${sanitizedSong}_${sanitizedArtist}_mediaforest.png`;
+    
+    const tiktokCsvUrl = tiktok_csv_direct_url || 
+        `https://expresserverjs.onrender.com/download?song=${encodeURIComponent(song_name)}&artist=${encodeURIComponent(artist)}`;
 
     const html = `
     <div style="font-family: Arial; padding: 20px;">
       <h2 style="color:#4a90e2;">🎵 Track Analysis Report</h2>
-      ${validTestImg ? '<p>Test image: <img src="data:image/png;base64,' + testBase64 + '" alt="Test Image" /></p>' : '<p>Test image not available</p>'}
       <p><strong>Song:</strong> ${song_name}<br/>
          <strong>Artist:</strong> ${artist}</p>
 
@@ -112,13 +90,10 @@ function sendEmail({
            <strong>Weekly average (last 7 days):</strong> ${shazam_weekly_avg || "-"}</p>
       </div>
       
-      ${validSpotifyImg ? `
       <div style="margin-bottom:20px;">
         <h4 style="color:#4a90e2; margin-top:10px;">Spotontrack</h4>
-        <p>Spotontrack image (${spotontrackBase64.length} chars):</p>
-        <img src="data:image/png;base64,${spotontrackBase64}" style="max-width:600px; border-radius: 8px;" alt="Spotontrack Image" />
+        <img src="${spotontrackUrl}" style="max-width:600px; border-radius: 8px;" alt="Spotontrack Image" />
       </div>
-      ` : '<p><em>Spotontrack image not available</em></p>'}
 
       <h3>📱 TikTok Performance</h3>
       <p>${chartex_stats}</p>
@@ -149,19 +124,14 @@ function sendEmail({
         </div>
       </div>
       
-      ${validTikTokCsv ? `
-      <a href="data:text/csv;base64,${tiktok_csv_base64}" download="TikTokPerformance.csv" style="display:inline-block;margin-top:8px;padding:8px 16px;background:#4a90e2;color:white;border-radius:6px;text-decoration:none;">
-            Download TikTok CSV
+      <a href="${tiktokCsvUrl}" download="TikTokPerformance.csv" style="display:inline-block;margin-top:8px;padding:8px 16px;background:#4a90e2;color:white;border-radius:6px;text-decoration:none;">
+        Download TikTok CSV
       </a>
-      ` : '<p><em>TikTok CSV not available</em></p>'}
 
       <h3>📻 Radio Performance</h3>
-      ${validMediaforestImg ? `
       <div style="margin-bottom:20px;">
-        <p>Mediaforest image (${mediaforestBase64.length} chars):</p>
-        <img src="data:image/png;base64,${mediaforestBase64}" style="max-width:600px; border-radius: 8px;" alt="Mediaforest Image" />
+        <img src="${mediaforestUrl}" style="max-width:600px; border-radius: 8px;" alt="Mediaforest Image" />
       </div>
-      ` : '<p><em>Mediaforest chart not available</em></p>'}
 
       <p style="margin-top:30px;color:#999;font-size:12px;">Generated by SongScape AI</p>
     </div>
